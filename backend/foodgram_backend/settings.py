@@ -127,3 +127,4 @@ MAX_ROLE_LENGTH = 25
 MIN_MARK = 1
 USER = 'user'
 ADMIN = 'admin'
+FILE_NAME = 'Список покупок.txt'
