@@ -1,62 +1,13 @@
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
 
-
-MAX_LENGTH = 150
-MAX_NAME_LENGTH = 200
-MAX_COLOR_LENGTH = 7
-MAX_MEASUREMENT_LENGTH = 10
-MAX_ROLE_LENGTH = 25
-MIN_MARK = 1
-USER = 'user'
-ADMIN = 'admin'
-
-
-class User(AbstractUser):
-    """Кастомная модель пользователя."""
-
-    ROLES = [
-        (USER, 'user'),
-        (ADMIN, 'admin')
-    ]
-    username = models.CharField(
-        'Имя пользователя',
-        unique=True,
-        max_length=MAX_LENGTH,
-        validators=[UnicodeUsernameValidator()]
-    )
-
-    email = models.EmailField(unique=True,
-                              verbose_name='Почта')
-    first_name = models.CharField(
-        'Имя', max_length=MAX_LENGTH, blank=True
-    )
-    last_name = models.CharField(
-        'Фамилия', max_length=MAX_LENGTH, blank=True
-    )
-    bio = models.TextField(
-        'Биография', blank=True
-    )
-    role = models.CharField(
-        'Роль',
-        choices=ROLES,
-        default=USER,
-        max_length=MAX_ROLE_LENGTH,
-    )
-
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-
-    @property
-    def is_admin(self):
-        """Проверяем является ли пользователь админом или суперюзером."""
-        return self.role == ADMIN or self.is_superuser
-
-    def __str__(self):
-        return self.username
+from foodgram_backend.settings import (
+    MAX_COLOR_LENGTH,
+    MAX_MEASUREMENT_LENGTH,
+    MAX_NAME_LENGTH,
+    MIN_MARK
+)
+from users.models import User
 
 
 class Tag(models.Model):
