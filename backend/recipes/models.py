@@ -78,11 +78,10 @@ class Tag(models.Model):
         return self.name
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
     """Модель ингридиентов."""
 
     name = models.CharField(max_length=MAX_NAME_LENGTH,
-                            unique=True,
                             verbose_name='Название ингридиента')
     measurement_unit = models.CharField(max_length=MAX_MEASUREMENT_LENGTH,
                                         verbose_name='Единицы измерения')
@@ -106,8 +105,8 @@ class Recipe(models.Model):
         upload_to='recipes/images/', verbose_name='Картинка'
         )
     description = models.TextField(verbose_name='Описание')
-    ingredients = models.ManyToManyField(Ingridient,
-                                         through='RecipeIngridients',
+    ingredients = models.ManyToManyField(Ingredient,
+                                         through='RecipeIngredients',
                                          verbose_name='Ингредиенты')
     tag = models.ManyToManyField(Tag,
                                  related_name='recipes',
@@ -135,14 +134,14 @@ class Recipe(models.Model):
         return self.name
 
 
-class RecipeIngridients(models.Model):
+class RecipeIngredients(models.Model):
     """Модель ингридиентов рецепта."""
 
     recipe = models.ForeignKey(Recipe,
                                on_delete=models.CASCADE,
                                related_name='recipe_ingredients',
                                verbose_name='Рецепт')
-    ingridient = models.ForeignKey(Ingridient,
+    ingredient = models.ForeignKey(Ingredient,
                                    on_delete=models.CASCADE,
                                    related_name='recipe_ingredients',
                                    verbose_name='Ингредиент')
@@ -162,7 +161,7 @@ class RecipeIngridients(models.Model):
         verbose_name_plural = 'Ингредиенты рецепта'
 
     def __str__(self):
-        return f'{self.recipe} - {self.ingridient}'
+        return f'{self.recipe} - {self.ingredient}'
 
 
 class Favourites(models.Model):
