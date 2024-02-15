@@ -7,25 +7,26 @@ from foodgram_backend.settings import ADMIN, MAX_LENGTH, MAX_ROLE_LENGTH, USER
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
-
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
     ROLES = [
         (USER, 'user'),
         (ADMIN, 'admin')
     ]
+
     username = models.CharField(
         'Имя пользователя',
         unique=True,
         max_length=MAX_LENGTH,
         validators=[UnicodeUsernameValidator()]
     )
-
     email = models.EmailField(unique=True,
                               verbose_name='Почта')
     first_name = models.CharField(
-        'Имя', max_length=MAX_LENGTH, blank=True
+        'Имя', max_length=MAX_LENGTH,
     )
     last_name = models.CharField(
-        'Фамилия', max_length=MAX_LENGTH, blank=True
+        'Фамилия', max_length=MAX_LENGTH,
     )
     bio = models.TextField(
         'Биография', blank=True
@@ -36,6 +37,7 @@ class User(AbstractUser):
         default=USER,
         max_length=MAX_ROLE_LENGTH,
     )
+    password = models.CharField(max_length=MAX_LENGTH, verbose_name='Пароль')
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -50,24 +52,27 @@ class User(AbstractUser):
         return self.username
 
 
-class Following(models.Model):
+class Subscribe(models.Model):
     """Возвращает пользователей, на которых подписан текущий пользователь."""
-
     user = models.ForeignKey(User,
                              on_delete=models.CASCADE,
-                             related_name='follower',
+                             related_name='subscriber',
                              verbose_name='Подписчик')
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
-                               related_name='following',
-                               verbose_name='Автор')
+                               related_name='subscribing',
+                               verbose_name='Автор подписки')
 
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_following'
+                fields=['user', 'author'], name='unique_name'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='prevent_self_follow'
             )
         ]
 
