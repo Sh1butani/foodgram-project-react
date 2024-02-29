@@ -54,18 +54,32 @@ class SubscribeViewSet(views.APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, user_id):
+        try:
+            author = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {'errors': 'Такого автора не существует!'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         serializer = SubscribeCreateSerializer(
             data={'user': request.user.id, 'author': user_id},
             context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(author_id=user_id)
+        serializer.save(author=author)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, user_id):
-        subscribe = get_object_or_404(
-            Subscribe, user=request.user, author=user_id
-        )
+        get_object_or_404(User, id=user_id)
+        try:
+            subscribe = Subscribe.objects.get(
+                user=request.user, author_id=user_id
+            )
+        except Subscribe.DoesNotExist:
+            return Response(
+                {'errors': 'Подписка не найдена'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         subscribe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -100,11 +114,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавление и удаление рецепта в избранное."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        favorites = Favorites.objects.filter(
-            user=request.user, recipe=recipe
-        )
         if request.method == 'POST':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Recipe.DoesNotExist:
+                return Response(
+                    {'errors': 'Такого рецепта не существует!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            favorites = Favorites.objects.filter(
+                user=request.user, recipe=recipe
+            )
             if favorites.exists():
                 return Response(
                     {'errors': 'Рецепт уже добавлен в избранное!'},
@@ -116,6 +136,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, id=pk)
+            favorites = Favorites.objects.filter(
+                user=request.user, recipe=recipe
+            )
             if not favorites.exists():
                 return Response(
                     {'errors': 'Рецепта нет в избранном!'},
@@ -133,11 +157,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Добавление и удаление рецепта в список покупок."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        shopping_list = (
-            ShoppingCart.objects.filter(user=request.user, recipe=recipe)
-        )
         if request.method == 'POST':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Recipe.DoesNotExist:
+                return Response(
+                    {'errors': 'Такого рецепта не существует!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            shopping_list = (
+                ShoppingCart.objects.filter(user=request.user, recipe=recipe)
+            )
             if shopping_list.exists():
                 return Response(
                     {'errors': 'Рецепт уже добавлен в список покупок!'},
@@ -149,6 +179,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, id=pk)
+            shopping_list = (
+                ShoppingCart.objects.filter(user=request.user, recipe=recipe)
+            )
             if not shopping_list.exists():
                 return Response(
                     {'errors': 'Рецепта нет в списке покупок!'},
