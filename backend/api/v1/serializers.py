@@ -101,8 +101,18 @@ class SubscribeSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_recipes(self, obj):
-        queryset = Recipe.objects.filter(author=obj.author)
-        return RecipeSimpleSerializer(queryset, many=True).data
+        request = self.context.get('request')
+        recipes = Recipe.objects.filter(author=obj.author)
+        if request and not request.user.is_anonymous:
+            recipes_limit = request.query_params.get('recipes_limit')
+            if recipes_limit:
+                try:
+                    recipes = recipes[:int(recipes_limit)]
+                except TypeError:
+                    pass
+        return RecipeSimpleSerializer(
+            recipes, many=True, context=self.context
+        ).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
@@ -118,7 +128,7 @@ class SubscribeCreateSerializer(serializers.ModelSerializer):
                 queryset=Subscribe.objects.all(),
                 fields=('user', 'author',),
                 message='Вы уже подписаны на данного пользователя!'
-            )
+            ),
         ]
 
     def validate(self, value):
@@ -129,7 +139,8 @@ class SubscribeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def to_representation(self, instance):
-        return SubscribeSerializer(instance).data
+        request = self.context.get('request')
+        return SubscribeSerializer(instance, context={'request': request}).data
 
 
 class TagSerializer(serializers.ModelSerializer):

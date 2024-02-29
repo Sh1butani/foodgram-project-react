@@ -43,6 +43,11 @@ class UserViewSet(BaseUserViewSet):
     """Вьюсет кастомного пользователя, унаследованный от djoser."""
     queryset = User.objects.all()
 
+    def get_permissions(self):
+        if self.action == 'me':
+            return (IsAuthenticated(),)
+        return super().get_permissions()
+
 
 class SubscribeViewSet(views.APIView):
     """Cоздание и удаление подписки."""
@@ -51,6 +56,7 @@ class SubscribeViewSet(views.APIView):
     def post(self, request, user_id):
         serializer = SubscribeCreateSerializer(
             data={'user': request.user.id, 'author': user_id},
+            context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
         serializer.save(author_id=user_id)
