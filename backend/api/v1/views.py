@@ -77,7 +77,7 @@ class SubscribeViewSet(views.APIView):
             )
         except Subscribe.DoesNotExist:
             return Response(
-                {'errors': 'Подписка не найдена'},
+                {'errors': 'Такой подписки не существует!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         subscribe.delete()
