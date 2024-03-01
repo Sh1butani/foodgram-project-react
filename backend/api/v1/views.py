@@ -13,7 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 from io import BytesIO
 
-from foodgram_backend.settings import FILE_NAME
+from foodgram_backend.constants import FILE_NAME
 from recipes.models import (
     Favorites,
     Ingredient,

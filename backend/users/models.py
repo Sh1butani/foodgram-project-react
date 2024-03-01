@@ -2,17 +2,13 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
-from foodgram_backend.settings import ADMIN, MAX_LENGTH, MAX_ROLE_LENGTH, USER
+from foodgram_backend.constants import MAX_LENGTH
 
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-    ROLES = [
-        (USER, 'user'),
-        (ADMIN, 'admin')
-    ]
 
     username = models.CharField(
         'Имя пользователя',
@@ -31,13 +27,6 @@ class User(AbstractUser):
     bio = models.TextField(
         'Биография', blank=True
     )
-    role = models.CharField(
-        'Роль',
-        choices=ROLES,
-        default=USER,
-        max_length=MAX_ROLE_LENGTH,
-    )
-    password = models.CharField(max_length=MAX_LENGTH, verbose_name='Пароль')
 
     class Meta:
         verbose_name = 'Пользователь'

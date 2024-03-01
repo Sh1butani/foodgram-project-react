@@ -1,10 +1,12 @@
-from django.core.validators import MinValueValidator, RegexValidator
+from colorfield.fields import ColorField
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from foodgram_backend.settings import (
+from foodgram_backend.constants import (
     MAX_COLOR_LENGTH,
     MAX_NAME_LENGTH,
     MIN_MARK,
+    MAX_MARK,
 )
 from users.models import User
 
@@ -14,18 +16,13 @@ class Tag(models.Model):
     name = models.CharField(max_length=MAX_NAME_LENGTH,
                             unique=True,
                             verbose_name='Название тэга')
-    color = models.CharField(max_length=MAX_COLOR_LENGTH,
-                             unique=True,
-                             verbose_name='Цвет в HEX')
+    color = ColorField(max_length=MAX_COLOR_LENGTH,
+                       unique=True,
+                       verbose_name='Цвет в HEX')
     slug = models.SlugField(
         max_length=MAX_NAME_LENGTH,
         unique=True,
         verbose_name='Уникальный слаг',
-        validators=[RegexValidator(
-            r'^[-a-zA-Z0-9_]+$',
-            message='Пожалуйста, введите корректный формат слага.'
-                    'Он должен содержать только буквы, цифры, "_" и "-".',
-        )]
     )
 
     class Meta:
@@ -46,6 +43,12 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit'
+            ),
+        ]
 
     def __str__(self):
         return self.name
@@ -76,8 +79,11 @@ class Recipe(models.Model):
         validators=(
             MinValueValidator(
                 MIN_MARK,
-                message='Время приготовления не может быть'
-                        f'меньше {MIN_MARK}.'
+                message=f'Время приготовления не может быть меньше {MIN_MARK}.'
+            ),
+            MaxValueValidator(
+                MAX_MARK,
+                message=f'Время приготовления не может превышать {MAX_MARK}.'
             ),
         )
     )
@@ -112,6 +118,11 @@ class RecipeIngredients(models.Model):
                 message='Количество ингредиентов  не может быть'
                         f'меньше {MIN_MARK}.',
             ),
+            MaxValueValidator(
+                MAX_MARK,
+                message='Количество ингредиентов не может'
+                        f'превышать {MAX_MARK}.'
+            ),
         )
     )
 
@@ -123,39 +134,39 @@ class RecipeIngredients(models.Model):
         return f'{self.recipe} - {self.ingredient}'
 
 
-class Favorites(models.Model):
+class BaseFavoritesShoppingCart(models.Model):
+    """Базовая модель для избранного и списка покупок."""
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.user} добавил {self.recipe} в {self._meta.verbose_name}'
+
+
+class Favorites(BaseFavoritesShoppingCart):
     """Модель для добавления рецепта в избранное."""
-    recipe = models.ForeignKey(Recipe,
-                               on_delete=models.CASCADE,
-                               related_name='favorites',
-                               verbose_name='Рецепт')
-    user = models.ForeignKey(User,
-                             on_delete=models.CASCADE,
-                             related_name='favorites',
-                             verbose_name='Пользователь')
 
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
-
-    def __str__(self):
-        return f'{self.user} добавил {self.recipe} в избранное'
+        default_related_name = 'favorites'
 
 
-class ShoppingCart(models.Model):
+class ShoppingCart(BaseFavoritesShoppingCart):
     """Модель для добавления рецепта в список покупок."""
-    recipe = models.ForeignKey(Recipe,
-                               on_delete=models.CASCADE,
-                               related_name='shopping_cart',
-                               verbose_name='Рецепт')
-    user = models.ForeignKey(User,
-                             on_delete=models.CASCADE,
-                             related_name='shopping_cart',
-                             verbose_name='Пользователь')
 
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-
-    def __str__(self):
-        return f'{self.user} добавил {self.recipe} в список покупок'
+        default_related_name = 'shopping_cart'

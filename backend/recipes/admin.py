@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from foodgram_backend.constants import MIN_MARK
 from recipes.models import (
     Favorites,
     Ingredient,
@@ -10,9 +11,17 @@ from recipes.models import (
 )
 
 
+class RecipeIngredientsInline(admin.TabularInline):
+    model = RecipeIngredients
+    min_num = MIN_MARK
+
+
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'favorites_count')
     list_filter = ('author', 'name', 'tags__name')
+    inlines = [
+        RecipeIngredientsInline,
+    ]
 
     def favorites_count(self, obj):
         return obj.favorites.count()
