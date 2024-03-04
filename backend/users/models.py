@@ -32,11 +32,6 @@ class User(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
-    @property
-    def is_admin(self):
-        """Проверяем является ли пользователь админом или суперюзером."""
-        return self.role == ADMIN or self.is_superuser
-
     def __str__(self):
         return self.username
 
