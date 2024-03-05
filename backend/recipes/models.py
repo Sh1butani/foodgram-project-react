@@ -5,8 +5,10 @@ from django.db import models
 from foodgram_backend.constants import (
     MAX_COLOR_LENGTH,
     MAX_NAME_LENGTH,
-    MIN_MARK,
-    MAX_MARK,
+    MIN_COOKING_TIME,
+    MAX_COOKING_TIME,
+    MIN_INGREDIENTS,
+    MAX_INGREDIENTS,
 )
 from users.models import User
 
@@ -78,12 +80,14 @@ class Recipe(models.Model):
         verbose_name='Время приготовления',
         validators=(
             MinValueValidator(
-                MIN_MARK,
-                message=f'Время приготовления не может быть меньше {MIN_MARK}.'
+                MIN_COOKING_TIME,
+                message='Время приготовления не может быть'
+                        f'меньше {MIN_COOKING_TIME}.'
             ),
             MaxValueValidator(
-                MAX_MARK,
-                message=f'Время приготовления не может превышать {MAX_MARK}.'
+                MAX_COOKING_TIME,
+                message='Время приготовления не может'
+                        f'превышать {MAX_COOKING_TIME}.'
             ),
         )
     )
@@ -114,14 +118,14 @@ class RecipeIngredients(models.Model):
         verbose_name='Количество ингредиентов',
         validators=(
             MinValueValidator(
-                MIN_MARK,
+                MIN_INGREDIENTS,
                 message='Количество ингредиентов  не может быть'
-                        f'меньше {MIN_MARK}.',
+                        f'меньше {MIN_INGREDIENTS}.',
             ),
             MaxValueValidator(
-                MAX_MARK,
+                MAX_INGREDIENTS,
                 message='Количество ингредиентов не может'
-                        f'превышать {MAX_MARK}.'
+                        f'превышать {MAX_INGREDIENTS}.'
             ),
         )
     )

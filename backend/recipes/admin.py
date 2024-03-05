@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from foodgram_backend.constants import MIN_MARK
+from foodgram_backend.constants import MIN_RECIPE_ADMIN
 from recipes.models import (
     Favorites,
     Ingredient,
@@ -13,7 +13,7 @@ from recipes.models import (
 
 class RecipeIngredientsInline(admin.TabularInline):
     model = RecipeIngredients
-    min_num = MIN_MARK
+    min_num = MIN_RECIPE_ADMIN
 
 
 class RecipeAdmin(admin.ModelAdmin):

@@ -2,7 +2,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from foodgram_backend.constants import MIN_MARK
+from foodgram_backend.constants import MIN_COOKING_TIME
 from recipes.models import (
     Favorites,
     Ingredient,
@@ -12,10 +12,6 @@ from recipes.models import (
     Tag,
 )
 from users.models import Subscribe, User
-
-
-class MyBase64ImageField(Base64ImageField):
-    EMPTY_VALUES = []
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -36,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return bool(
-            request and not request.user.is_anonymous
+            request and request.user.is_authenticated
             and Subscribe.objects.filter(
                 user=request.user, author__username=obj
             ).exists()
@@ -47,8 +43,8 @@ class RecipeSimpleSerializer(serializers.ModelSerializer):
     """Сериализатор для списка рецептов без ингридиентов
     для отображения в подписках, списках покупок и в избранном."""
     name = serializers.CharField()
-    cooking_time = serializers.IntegerField(min_value=MIN_MARK)
-    image = MyBase64ImageField()
+    cooking_time = serializers.IntegerField(min_value=MIN_COOKING_TIME)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -207,7 +203,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    image = MyBase64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -218,7 +214,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         return bool(
-            request and not request.user.is_anonymous
+            request and request.user.is_authenticated
             and Favorites.objects.filter(
                 user=request.user, recipe=obj
             ).exists()
@@ -227,7 +223,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         return bool(
-            request and not request.user.is_anonymous
+            request and request.user.is_authenticated
             and ShoppingCart.objects.filter(
                 user=request.user, recipe=obj
             ).exists()
@@ -241,7 +237,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
-    image = MyBase64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -272,14 +268,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, recipe, validated_data):
-        if 'ingredients' not in validated_data:
-            raise serializers.ValidationError(
-                {'ingredients': 'Обязательное поле.'}
-            )
-        if 'tags' not in validated_data:
-            raise serializers.ValidationError(
-                {'tags': 'Обязательное поле.'}
-            )
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         RecipeIngredients.objects.filter(recipe=recipe).delete()
@@ -296,7 +284,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         if not ingredients:
             raise serializers.ValidationError(
-                {'ingredients': 'Отсутствуют ингредиенты!'}
+                {'ingredients': 'Обязательное поле!'}
             )
         ingredients_id = [ingredient['id'] for ingredient in ingredients]
         if len(ingredients_id) != len(set(ingredients_id)):
@@ -306,7 +294,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         if not tags:
             raise serializers.ValidationError(
-                {'tags': 'Отсутствуют теги!'}
+                {'tags': 'Обязательное поле!'}
             )
         if len(tags) != len(set(tags)):
             raise serializers.ValidationError(
@@ -314,3 +302,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+    def validate_image(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                {'image': 'Обязательное поле!'}
+            )
+        return value

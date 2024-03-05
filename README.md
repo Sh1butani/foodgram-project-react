@@ -126,4 +126,7 @@ POST /api/v1/users/{id}/subscribe/
 
 
 Полный перечень запросов вы можете найти в документации к API, доступной после запуска сервера
-по адресу: [http://127.0.0.1:7000/api/docs/](http://127.0.0.1:7000/api/docs/) 
+по адресу: [http://127.0.0.1:7000/api/docs/](http://127.0.0.1:7000/api/docs/)
+
+### Автор:
+[David Pilosyan](https://t.me/Shibutani)

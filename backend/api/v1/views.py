@@ -66,13 +66,14 @@ class SubscribeViewSet(views.APIView):
 
     def delete(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        subscribe = Subscribe.objects.filter(user=request.user, author=user)
-        if not subscribe.exists():
+        deleted_subscribe, _ = Subscribe.objects.filter(
+            user=request.user, author=user
+        ).delete()
+        if not deleted_subscribe:
             return Response(
                 {'errors': 'Такой подписки не существует!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        subscribe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -106,13 +107,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавление и удаление рецепта в избранное."""
-        if request.method == 'POST':
-            serializer = FavoriteSerializer(
-                data={'user': request.user.pk, 'recipe': pk}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = FavoriteSerializer(
+            data={'user': request.user.pk, 'recipe': pk}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
@@ -120,7 +120,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         deleted_favorites, _ = Favorites.objects.filter(
             user=request.user, recipe=recipe
         ).delete()
-        if deleted_favorites == 0:
+        if not deleted_favorites:
             return Response(
                 {'errors': 'Рецепта нет в избранном!'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -136,13 +136,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Добавление и удаление рецепта в список покупок."""
-        if request.method == 'POST':
-            serializer = ShoppingCartSerializer(
-                data={'user': request.user.pk, 'recipe': pk}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = ShoppingCartSerializer(
+            data={'user': request.user.pk, 'recipe': pk}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk):
@@ -150,7 +149,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         deleted_shopping_list, _ = (
             ShoppingCart.objects.filter(user=request.user, recipe=recipe)
         ).delete()
-        if deleted_shopping_list == 0:
+        if not deleted_shopping_list:
             return Response(
                 {'errors': 'Рецепта нет в списке покупок!'},
                 status=status.HTTP_400_BAD_REQUEST
